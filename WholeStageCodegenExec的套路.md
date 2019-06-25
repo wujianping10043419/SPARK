@@ -32,6 +32,7 @@ CollapseCodegenStages的apply方法，当conf.wholeStageEnabled为真则调用�
 - C:Plan_Codegen
 - I:InputAdapter
 - N:Plan_NoCodegen
+
 | W | C | C | C | I | N | N | N | N | W | C |
 |:--|--:|:--|:--|--:|:--|:--|--:|:--|:--|:--|
 | W	| C | C | I | N	| N | N | W | C | I	| N |
