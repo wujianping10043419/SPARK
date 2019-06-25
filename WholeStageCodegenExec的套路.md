@@ -72,6 +72,7 @@ insertWholeStageCodegen(plan)：
 在WholeStageCodegenExec的doExecute()方法中，一些列的代码生成后，其读child的inputRDDs作为数据源，应用到生成的转换代码。
 	所以，inputRDDs是被WholeStageCodegenExec读取，其通过链接子树的inputRDDs迭代到叶子节点方向第一个InputAdapter或者结尾；然后被WholeStageCodegenExec作为数据源，应用到生成的转换代码。
 这里的意思是WholeStage生成的代码是此WholeStageCodegenExec开始的Codegen链所有物理计划的代码和是吧。
+
 |class|default|define|exception|
 |:--:|:--:|:--:|:--:|
 |ProjectExec|child|||
@@ -126,6 +127,7 @@ child.asInstanceOf[CodegenSupport].produce(ctx, this)
 2. SortExec和HashAggregateExec有比较复杂的doProduce代码创建过程，但其同样调用了子节点的Produce；
 3. WholeStageCodegenExec是在其doCodeGen方法调用了子节点的Produce；
 4. 和inputRDDs类似，3个自定义的inputRDDs的Exec，还有InputAdapter，以及SortMergeJoinExec是没有调用child的doProduce，他们包含了复杂的代码生成过程；其中SortMergeJoinExec稍有疑问，道理上讲，它子节点是inputAdapter，是可以调用子节点的Produce的，可能是因为其本身应该有复杂的代码生成过程，所以跳过了inputAdapter吧。由于暂时没有此场景用例，暂不分析，做为特例吧。
+
 |class|default|define|exception|
 |:--:|:--:|:--:|:--:|
 |ProjectExec|child|　|　|
@@ -253,6 +255,7 @@ final def consume(ctx: CodegenContext, outputVars: Seq[ExprCode], row: String = 
 2. 而define列的5个Exec的Consume方法都是被自己的doProduce调用，即self调用；这5个节点也是上面Produce\doProduce分析中的Codegen链的尾节点；
 3. SortExec\HashAggregateExec的Consume方法也是被自己的doProduce调用，即self调用；但他们有点特殊，他们的doProduce还先调用了child.asInstanceOf[CodegenSupport].produce；
 4. WholeStageCodegenExec的Consume方法没人调用，因为它是所有Codegen链的首节点，即最后一级parent。
+
 |class|default|define|exception|
 |:--:|:--:|:--:|:--:|
 |ProjectExec|doConsume|　|　|
@@ -274,6 +277,7 @@ final def consume(ctx: CodegenContext, outputVars: Seq[ExprCode], row: String = 
 |SortMergeJoinExec|　|doProduce|　|
 |BaseLimitExec|
 |(Local\Global)|doConsume|　|　|
+
 所以，由上知，支持Codegen的物理计划：
 1. 所有Exec的Consume方法调用了自己父节点的doConsume；而Consume是被自身的doProduce或者doConsume调用；
 2. WholeStageCodegenExec的Consume没人调用，它的doConsume终结了这种循环调用；
@@ -291,6 +295,7 @@ Generate the Java source code to process the rows from child SparkPlan..
 2. 有5节点没有实现doConsume方法，其Consume被doProduce调用，所以他们其实是Consume->doConsume的起点(也是produce->doProduce的终点，doProduce是他们的链接点)；
 3. WholeStageCodegenExec\SortExec\HashAggregateExec的doConsume没有调用Consume，所以他们是Consume->doConsume的终点，这和上节分析一致；
 4. SortExec\HashAggregateExec有点特殊，doConsume其结束了子链的Consume-> doConsume，但又开始了父链的Consume-> doConsume；所以他们将当前Codegen链拆成了2个生产消费链，子链是父链的一部分，最后生成的代码还是父链的发起点WholeStageCodegenExec。
+
 |class|default|define|exception|
 |:--:|:--:|:--:|:--:|
 |ProjectExec|Consume|　|　|
