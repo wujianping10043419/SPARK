@@ -1,4 +1,5 @@
 #Filter
+
 ```
 public Object generate(Object[] references) {
   return new GeneratedIterator(references);
@@ -95,6 +96,7 @@ final class GeneratedIterator extends org.apache.spark.sql.execution.BufferedRow
 
 
 #Join
+
 ```
 insert overwrite table peopleWithId SELECT a.name, a.age, b.id FROM  people2 a join id2 b on a.name = b.name
 
